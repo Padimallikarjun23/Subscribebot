@@ -1,62 +1,94 @@
-import os
-import pymongo
-from datetime import datetime, timedelta
-from pyrogram import Client, filters
+from pyrogram import Client, filters, idle
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
+from pymongo import MongoClient
+import datetime, asyncio
 
-# ============ CONFIG ============
+# ==== CONFIG ====
 API_ID = 22262560
 API_HASH = "73eeccd990484d0c87a90756aae9fa21"
 BOT_TOKEN = "7582030546:AAFScY5tePtetBp6gj-A6i1amDkVKvOCAYo"
 
 ADMIN_ID = 7901412493
 CHANNEL_1 = -1002970592652
-CHANNEL_2 = -100  # replace with your second channel ID
+CHANNEL_2 = -100  # if needed later
+UPI_ID = "mallikarjun.padi@ptaxis"
 LOG_CHANNEL = -1003056919332
 
+# ==== MONGODB ====
 MONGO_URL = "mongodb+srv://Malliofficial:malliofficial@cluster0.db7kygq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
-UPI_ID = "mallikarjun.padi@ptaxis"
-
-client = pymongo.MongoClient(MONGO_URL)
-db = client["SubscriptionBot"]
+mongo_client = MongoClient(MONGO_URL)
+db = mongo_client["subbot"]
 members = db["members"]
 
-# ============ PLAN NAMES ============
+# ==== PLAN NAMES ====
 PLAN_NAMES = {
-    "m4u": "𝗠𝗮𝗹𝗹𝗶𝟒𝗨_𝗣𝗿𝗲𝗺𝗶𝘂𝗺",
-    "files": "𝗨𝗻𝗹𝗶𝗺𝗶𝘁𝗲𝗱 𝗙𝗶𝗹𝗲'𝘀",
+    "m4u": "𝗠𝟰𝗨_𝗣𝗿𝗲𝗺𝗶𝘂𝗺",
+    "file": "𝗨𝗻𝗹𝗶𝗺𝗶𝘁𝗲𝗱 𝗙𝗶𝗹𝗲'𝘀",
     "both": "𝗕𝗼𝘁𝗵"
 }
 
-# ============ BOT INIT ============
-app = Client("SubscriptionBot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
+# ==== BOT CLIENT ====
+app = Client("subbot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
-# ============ START ============
+
+# ==== Helper keyboards ====
+def main_menu():
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("🛒 Buy Subscription", callback_data="buy")],
+        [InlineKeyboardButton("💰 My Plan", callback_data="plan")]
+    ])
+
+def buy_keyboard():
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton(f"✨ {PLAN_NAMES['m4u']} (₹35/30d)", callback_data="plan_m4u")],
+        [InlineKeyboardButton(f"📂 {PLAN_NAMES['file']} (₹20/30d)", callback_data="plan_file")],
+        [InlineKeyboardButton(f"🔥 {PLAN_NAMES['both']} (₹50/30d)", callback_data="plan_both")],
+    ])
+
+
+# ==== START COMMAND ====
 @app.on_message(filters.command("start"))
 async def start(client, message):
-    keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton("✨ Buy Plans", callback_data="buy")],
-        [InlineKeyboardButton("ℹ️ My Plan", callback_data="status")]
-    ])
-    await message.reply_text("👋 Welcome! Choose an option:", reply_markup=keyboard)
+    await message.reply_text(
+        "🎉 Welcome to Subscription Bot!\n\n"
+        f"👤 User ID: `{message.from_user.id}`\n\n"
+        "Available Commands:\n"
+        "🛒 /buy - Purchase subscription\n"
+        "💰 /plan - Check your plan\n\n"
+        "Admin Support: @M4U_Admin_Bot",
+        reply_markup=main_menu()
+    )
 
-# ============ BUY PLANS ============
-@app.on_callback_query(filters.regex("^buy$"))
-async def buy_plans(client, cq: CallbackQuery):
-    keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton("✨ 𝗠𝗮𝗹𝗹𝗶𝟒𝗨_𝗣𝗿𝗲𝗺𝗶𝘂𝗺 (₹35/30d)", callback_data="plan_m4u")],
-        [InlineKeyboardButton("✨ 𝗨𝗻𝗹𝗶𝗺𝗶𝘁𝗲𝗱 𝗙𝗶𝗹𝗲'𝘀 (₹20/30d)", callback_data="plan_files")],
-        [InlineKeyboardButton("✨ 𝗕𝗼𝘁𝗵 (₹50/30d)", callback_data="plan_both")]
-    ])
-    await cq.message.edit_text("💳 Choose your subscription plan:", reply_markup=keyboard)
-    await cq.answer()
 
-# ============ PLAN SELECTION ============
+# ==== ADMIN STATS ====
+@app.on_message(filters.command("stats") & filters.user(ADMIN_ID))
+async def stats(client, message):
+    total = members.distinct("user_id")  # unique users
+    m4u = members.count_documents({"plan": "m4u"})
+    file = members.count_documents({"plan": "file"})
+    both = members.count_documents({"plan": "both"})
+
+    await message.reply_text(
+        f"📊 Subscription Stats:\n\n"
+        f"👥 Total Unique Users: {len(total)}\n"
+        f"✨ {PLAN_NAMES['m4u']}: {m4u}\n"
+        f"📂 {PLAN_NAMES['file']}: {file}\n"
+        f"🔥 {PLAN_NAMES['both']}: {both}"
+    )
+
+
+# ==== /buy command ====
+@app.on_message(filters.command("buy"))
+async def buy_cmd(client, message):
+    await message.reply_text("🛒 Choose your subscription plan:", reply_markup=buy_keyboard())
+
+
+# ==== Plan Selection ====
 @app.on_callback_query(filters.regex("^plan_"))
 async def select_plan(client, cq: CallbackQuery):
-    plan = cq.data.split("_", 1)[1]
+    plan = cq.data.split("_")[1]
     user_id = cq.from_user.id
-    prices = {"m4u": 35, "files": 20, "both": 50}
+    prices = {"m4u": 35, "file": 20, "both": 50}
 
     existing = members.find_one({"user_id": user_id, "plan": plan, "join_date": {"$ne": "PENDING"}})
     if existing:
@@ -77,41 +109,86 @@ async def select_plan(client, cq: CallbackQuery):
         upsert=True
     )
 
-# ============ HANDLE SCREENSHOTS ============
-@app.on_message(filters.photo & ~filters.private)
+
+# ==== Handle Screenshot ====
+@app.on_message(filters.photo & ~filters.command(["start", "buy", "plan"]))
 async def handle_screenshot(client, message):
     user_id = message.from_user.id
-    pending = members.find_one({"user_id": user_id, "join_date": "PENDING"})
-    if not pending:
+    pending_doc = members.find_one({"user_id": user_id, "join_date": "PENDING"})
+    if not pending_doc:
+        await message.reply_text("❌ Please select a plan first using /buy before sending screenshot.")
         return
 
-    plan = pending["plan"]
-    await app.send_message(
+    plan = pending_doc["plan"]
+
+    fwd = await message.forward(LOG_CHANNEL)
+    await client.send_message(
         LOG_CHANNEL,
-        f"🆕 Payment request from {message.from_user.mention} (ID: {user_id}).\nPlan: {PLAN_NAMES.get(plan, plan)}",
+        f"🆕 Payment request from {message.from_user.mention} (ID: {user_id}).\nPlan: {PLAN_NAMES[plan]}",
+        reply_to_message_id=fwd.id,
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton(f"✅ {PLAN_NAMES['m4u']}", callback_data=f"approve_{user_id}_m4u")],
+            [InlineKeyboardButton(f"✅ {PLAN_NAMES['file']}", callback_data=f"approve_{user_id}_file")],
+            [InlineKeyboardButton(f"✅ {PLAN_NAMES['both']}", callback_data=f"approve_{user_id}_both")],
+        ])
     )
-    await message.reply_text("✅ Payment screenshot received. Admin will verify soon.")
+    await message.reply_text("✅ Screenshot sent to admin for verification. Please wait...")
 
-# ============ STATUS ============
-@app.on_callback_query(filters.regex("^status$"))
-async def my_plan(client, cq: CallbackQuery):
-    user_id = cq.from_user.id
-    data = members.find_one({"user_id": user_id, "join_date": {"$ne": "PENDING"}})
-    if not data:
-        await cq.message.reply_text("❌ You have no active subscription.")
-        return
 
-    join_date = datetime.strptime(data["join_date"], "%Y-%m-%d")
-    expiry = join_date + timedelta(days=30)
-    await cq.message.reply_text(f"📅 Your Plan: {PLAN_NAMES[data['plan']]}\n"
-                                f"🗓 Joined: {join_date.date()}\n"
-                                f"⌛ Expires: {expiry.date()}")
+# ==== Approve Button ====
+@app.on_callback_query(filters.regex("^approve_"))
+async def approve_btn(client, cq: CallbackQuery):
+    _, user_id, plan = cq.data.split("_")
+    user_id = int(user_id)
+    join_date = datetime.date.today().isoformat()
+
     await cq.answer()
+    try:
+        if plan == "m4u":
+            invite1 = await client.create_chat_invite_link(CHANNEL_1, member_limit=1)
+            await client.send_message(user_id, f"🎉 Approved!\nHere is your invite link:\n{invite1.invite_link}")
 
-# ============ RUN ============
-app.run()
-mber(CHANNEL_1, user_id)
-                    if plan in ["files", "both"]:
+        elif plan == "file":
+            invite2 = await client.create_chat_invite_link(CHANNEL_2, member_limit=1)
+            await client.send_message(user_id, f"🎉 Approved!\nHere is your invite link:\n{invite2.invite_link}")
+
+        elif plan == "both":
+            invite1 = await client.create_chat_invite_link(CHANNEL_1, member_limit=1)
+            invite2 = await client.create_chat_invite_link(CHANNEL_2, member_limit=1)
+            await client.send_message(
+                user_id,
+                f"🎉 Approved!\nHere are your invite links:\n\n"
+                f"🔹 Channel 1: {invite1.invite_link}\n"
+                f"🔹 Channel 2: {invite2.invite_link}"
+            )
+
+        members.update_one(
+            {"user_id": user_id, "plan": plan},
+            {"$set": {"join_date": join_date}},
+            upsert=True
+        )
+
+        await cq.message.edit_text(f"✅ Approved {user_id} for **{PLAN_NAMES[plan]}** plan")
+
+    except Exception as e:
+        await cq.message.edit_text(f"⚠️ Error: {e}")
+
+
+# ==== Auto Remove After 30 Days ====
+async def check_and_remove():
+    while True:
+        today = datetime.date.today()
+        for doc in members.find({"join_date": {"$ne": "PENDING"}}):
+            user_id = doc["user_id"]
+            plan = doc["plan"]
+            join_date = datetime.date.fromisoformat(doc["join_date"])
+            days_passed = (today - join_date).days
+
+            if days_passed >= 30:
+                try:
+                    if plan in ["m4u", "both"]:
+                        await app.kick_chat_member(CHANNEL_1, user_id)
+                    if plan in ["file", "both"]:
                         await app.kick_chat_member(CHANNEL_2, user_id)
 
                     await app.send_message(
