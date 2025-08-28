@@ -22,9 +22,7 @@ members = db["members"]
 
 # ==== PLAN NAMES ====
 PLAN_NAMES = {
-    "hc": "HC Originals Bot",
-    "file": "File To Link Bot",
-    "both": "Both"
+    "𝗠𝗮𝗹𝗹𝗶𝟒𝗨_𝗣𝗿𝗲𝗺𝗶𝘂𝗺": "𝗠𝗮𝗹𝗹𝗶𝟒𝗨_𝗣𝗿𝗲𝗺𝗶𝘂𝗺",
 }
 
 # ==== BOT CLIENT ====
@@ -40,10 +38,7 @@ def main_menu():
 
 def buy_keyboard():
     return InlineKeyboardMarkup([
-        [InlineKeyboardButton("🤖 HC Originals Bot (₹30/30d)", callback_data="plan_hc")],
-        [InlineKeyboardButton("📂 File to Link Bot (₹20/30d)", callback_data="plan_file")],
-        [InlineKeyboardButton("🔥 Both (₹40/30d)", callback_data="plan_both")],
-    ])
+        [InlineKeyboardButton("🔥 𝗠𝗮𝗹𝗹𝗶𝟒𝗨_𝗣𝗿𝗲𝗺𝗶𝘂𝗺 (₹35/30d)", callback_data="plan_hc")],
 
 
 # ==== START COMMAND ====
@@ -55,7 +50,7 @@ async def start(client, message):
         "Available Commands:\n"
         "🛒 /buy - Purchase subscription\n"
         "💰 /plan - Check your plan\n\n"
-        "Admin Support: @HC_Support_bot",
+        "Admin Support: @M4U_Admin_Bot",
         reply_markup=main_menu()
     )
 
@@ -166,7 +161,7 @@ async def plan_callback(client, cq: CallbackQuery):
 async def select_plan(client, cq: CallbackQuery):
     plan = cq.data.split("_")[1]
     user_id = cq.from_user.id
-    prices = {"hc": 30, "file": 20, "both": 40}
+    prices = {"hc": 35, "}
 
     # check if already active
     existing = members.find_one({"user_id": user_id, "plan": plan, "join_date": {"$ne": "PENDING"}})
