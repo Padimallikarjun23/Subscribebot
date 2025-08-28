@@ -15,7 +15,7 @@ UPI_ID = "mallikarjun.padi@ptaxis"
 LOG_CHANNEL = -1003056919332
 
 # ==== MONGODB ====
-MONGO_URL = "mongodb+srv://Malliofficial:malliofficial@cluster0.db7kygq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+MONGO_URL = "mongodb+srv://Mallikarjun:malli123@cluster0.54pprxf.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 mongo_client = MongoClient(MONGO_URL)
 db = mongo_client["subbot"]
 members = db["members"]
