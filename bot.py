@@ -4,18 +4,18 @@ from pymongo import MongoClient
 import datetime, asyncio
 
 # ==== CONFIG ====
-API_ID = 012345
-API_HASH = ""
-BOT_TOKEN = ""
+API_ID = 22262560
+API_HASH = "73eeccd990484d0c87a90756aae9fa21"
+BOT_TOKEN = "7582030546:AAFScY5tePtetBp6gj-A6i1amDkVKvOCAYo"
 
-ADMIN_ID = 123456789
-CHANNEL_1 = -100
-CHANNEL_2 = -100
-UPI_ID = "@upi"
-LOG_CHANNEL = -100   # <-- replace with your log channel ID
+ADMIN_ID = 7901412493
+CHANNEL_1 = -1002970592652
+CHANNEL_2 = -1003056919332
+UPI_ID = "mallikarjun.padi@ptaxis"
+LOG_CHANNEL = -1002634025460   # <-- replace with your log channel ID
 
 # ==== MONGODB ====
-MONGO_URL = ""
+MONGO_URL = "mongodb+srv://Malliofficial:malliofficial@cluster0.db7kygq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 mongo_client = MongoClient(MONGO_URL)
 db = mongo_client["subbot"]
 members = db["members"]
