@@ -10,7 +10,7 @@ BOT_TOKEN = "7582030546:AAFScY5tePtetBp6gj-A6i1amDkVKvOCAYo"
 
 ADMIN_ID = 7901412493
 CHANNEL_1 = -1002970592652
-CHANNEL_2 = -1002970592652  # add if needed
+CHANNEL_2 = -1002970592652
 UPI_ID = "mallikarjun.padi@ptaxis"
 LOG_CHANNEL = -1003056919332
 
@@ -71,9 +71,9 @@ async def stats(client, message):
     await message.reply_text(
         f"📊 Subscription Stats:\n\n"
         f"👥 Total Unique Users: {len(total)}\n"
-        f"🤖 {PLAN_NAMES['m4u']}: {m4u}\n"
-        f"📂 {PLAN_NAMES['file']}: {file}\n"
-        f"🔥 {PLAN_NAMES['both']}: {both}"
+        f"🤖 {PLAN_NAMES['𝗠𝟰𝗨_𝗣𝗿𝗲𝗺𝗶𝘂𝗺']}: {m4u}\n"
+        f"📂 {PLAN_NAMES['𝗨𝗻𝗹𝗶𝗺𝗶𝘁𝗲𝗱 𝗙𝗶𝗹𝗲'𝘀']}: {file}\n"
+        f"🔥 {PLAN_NAMES['𝗕𝗼𝘁𝗵']}: {both}"
     )
 
 
